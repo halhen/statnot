@@ -57,6 +57,8 @@ STATUS_UPDATE_INTERVAL = 2.0 # seconds
 STATUS_COMMAND = ["/bin/sh", "%s/.statusline.sh" % os.getenv("HOME")] 
 
 # update_text(text) is called when the status text should be updated
+# If there is a pending notification to be formatted, it is appended as
+# the final argument to the STATUS_COMMAND, e.g. as $1 in default shellscript
 # Uncomment the appropriate one below, or write your own.
 
 # dummy (echo text)
@@ -94,10 +96,37 @@ def next_notification(pop = False):
         return None
 
     with notification_queue_lock:
+        # If there are several pending messages, discard the first 0-timeouts
+        while len(notification_queue) > 1 and notification_queue[0][2] == 0:
+            notification_queue.pop(0)
+
         if pop:
             return notification_queue.pop(0)
         else:
             return notification_queue[0]
+
+def get_statustext(notification = ''):
+    output = ''
+    try:
+        if not notification:
+            command = STATUS_COMMAND
+        else:
+            command = STATUS_COMMAND + [notification]
+            
+        p = subprocess.Popen(command, stdout=subprocess.PIPE)
+
+        # Get first line
+        output = p.stdout.readline()[:-1]
+    except:
+        sys.stderr.write("%s: could not read status message (%s)\n"
+                         % (sys.argv[0], ' '.join(STATUS_COMMAND)))
+
+    # Error - STATUS_COMMAND didn't exist or delivered empty result
+    # Fallback to notification only
+    if not output:
+        output = notification
+        
+    return output
     
 def message_thread(dummy):
     last_status_update = 0
@@ -107,35 +136,40 @@ def message_thread(dummy):
     while 1:
         notif = next_notification()
         current_time = time.time()
+        update_status = False
+
         if notif:
             if notif[1] != current_notification_text:
-                current_notification_text = notif[1]
-                update_text(current_notification_text)
-                last_notification_update = current_time
+                update_status = True
 
-            if current_time > last_notification_update + notif[2]:
-                # current message has expired
+            elif current_time > last_notification_update + notif[2]:
+                # If requested timeout is zero, notification shows until
+                # a new notification arrives or a regular status mesasge
+                # cleans it
+                # This way is a bit risky, but works. Keep an eye on this
+                # when changing code
+                if notif[2] != 0:
+                    update_status = True
+
+                # Pop expired notification
                 next_notification(True)
+                notif = next_notification()
+
+            if update_status == True:
+                last_notification_update = current_time
+                
+        if current_time > last_status_update + STATUS_UPDATE_INTERVAL:
+            update_status = True
+
+        if update_status:
+            if notif:
+                current_notification_text = notif[1]
+            else:
                 current_notification_text = ''
                 
-            # If given time is 0, keep notification for one status message tick
-            # but allow new notifications to appear
-            if notif[2] == 0:
-                last_status_update = time.time()
-
-        else:
-            if current_time > last_status_update + STATUS_UPDATE_INTERVAL:
-                try:
-                    p = subprocess.Popen(STATUS_COMMAND, stdout=subprocess.PIPE)
-                    while 1:
-                        output = p.stdout.readline()[:-1]
-                        if output == '' and p.poll() != None: break
-                        update_text(output)
-                except:
-                    sys.stderr.write("%s: could not read status message (%s)\n"
-                                     % (sys.argv[0], ' '.join(STATUS_COMMAND)))
-                    
-                last_status_update = time.time()
+            update_text(get_statustext(current_notification_text))
+            last_status_update = current_time
+                
         time.sleep(0.1)		
 
 class NotificationFetcher(dbus.service.Object):
@@ -153,7 +187,7 @@ class NotificationFetcher(dbus.service.Object):
             self._id += 1
             notification_id = self._id
 			
-        text = "%s %s" % (summary, body)
+        text = ("%s %s" % (summary, body)).strip()
         add_notification( [notification_id,
                           text[:NOTIFICATION_MAX_LENGTH],
                           int(expire_timeout) / 1000.0] )

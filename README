@@ -26,14 +26,22 @@ Example .xinitrc when using dwm:
 
 *Note: you should obviously disable any existing status update scripts*
 
-When there is no notification message pending, statnot prints a regular
-status line. By default ~/.statusline.sh is called, and stdout is printed.
-Example .statusline.sh (prints `[load 0.27 0.15 0.10]   12:25`):
+At regular intervals, ~/.statusline.sh is called, and the stdout is printed
+in the status bar. If there is a notification to be shown, it is passed as
+the last argument ($1 in this example).
 
-    loadavg="`cat /proc/loadavg | awk '{print $1, $2, $3}'`"
-    echo "[load ${loadavg}]   `date +'%R'`"
+Example .statusline.sh (see below) prints `[load 0.27 0.15 0.10]   12:25`
+by default and "NOTIFICATION: <text>" when a notification should show. If
+nothing is returned, the status text, if available, is shown.
 
-*Note: make sure .statusline.sh is executable*
+    if [ $# -eq 0 ]; then
+        loadavg="`cat /proc/loadavg | awk '{print $1, $2, $3}'`";
+        echo "[load ${loadavg}]   `date +'%R'`";
+    else
+        echo "NOTIFICATION: $1";
+    fi
+
+*Note: if notifications doesn't show, double check your .statusline.sh*
 
 To test if it works (watch status bar):
 
