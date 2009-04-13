@@ -32,7 +32,9 @@ import dbus
 import dbus.service
 import dbus.mainloop.glib
 import gobject
+import os
 import subprocess
+import sys
 import thread
 import time
 
@@ -45,19 +47,19 @@ DEFAULT_NOTIFY_TIMEOUT = 3000 # milliseconds
 MAX_NOTIFY_TIMEOUT = 5000 # milliseconds
 
 # Maximum number of characters in a notification. 
-NOTIFICATION_MAX_LENGTH = 75 # number of characters
+NOTIFICATION_MAX_LENGTH = 100 # number of characters
 
 # Time between regular status updates
 STATUS_UPDATE_INTERVAL = 2.0 # seconds
 
 # Command to fetch status text from. We read from stdout.
 # Each argument must be an element in the array
-STATUS_COMMAND = ["/bin/sh", "./stat.sh"] # put a new item in array where you usually put space
+STATUS_COMMAND = ["/bin/sh", "%s/.statusline.sh" % os.getenv("HOME")] 
 
 # update_text(text) is called when the status text should be updated
 # Uncomment the appropriate one below, or write your own.
 
-# dummy (echo text from daemon)
+# dummy (echo text)
 #def update_text(text):
 #    print text
 
@@ -67,9 +69,11 @@ def update_text(text):
 
 # ===== CONFIGURATION END =====
 
+
+    
 # List of not shown notifications.
 # Array of arrays: [id, text, timeout in s]
-# First element is being displayed right now
+# 0th element is being displayed right now, and may change
 # Replacements of notification happens att add
 # message_thread only checks first element for changes
 notification_queue = []
@@ -77,14 +81,12 @@ notification_queue_lock = thread.allocate_lock()
 
 def add_notification(notif):
     with notification_queue_lock:
-        handled = False
         for index, n in enumerate(notification_queue):
             if n[0] == notif[0]: # same id, replace instead of queue
                 n[1:] = notif[1:]
-                handled = True
+                return
 
-        if not handled:
-            notification_queue.append(notif)
+        notification_queue.append(notif)
 
 def next_notification(pop = False):
     # No need to be thread safe here. Also most common scenario
@@ -96,7 +98,6 @@ def next_notification(pop = False):
             return notification_queue.pop(0)
         else:
             return notification_queue[0]
-
     
 def message_thread(dummy):
     last_status_update = 0
@@ -124,13 +125,17 @@ def message_thread(dummy):
 
         else:
             if current_time > last_status_update + STATUS_UPDATE_INTERVAL:
-                p = subprocess.Popen(STATUS_COMMAND, stdout=subprocess.PIPE)
-                while 1:
-                    output = p.stdout.readline()[:-1]
-                    if output == '' and p.poll() != None: break
-                    update_text(output)
+                try:
+                    p = subprocess.Popen(STATUS_COMMAND, stdout=subprocess.PIPE)
+                    while 1:
+                        output = p.stdout.readline()[:-1]
+                        if output == '' and p.poll() != None: break
+                        update_text(output)
+                except:
+                    sys.stderr.write("%s: could not read status message (%s)\n"
+                                     % (sys.argv[0], ' '.join(STATUS_COMMAND)))
+                    
                 last_status_update = time.time()
-
         time.sleep(0.1)		
 
 class NotificationFetcher(dbus.service.Object):
@@ -141,10 +146,6 @@ class NotificationFetcher(dbus.service.Object):
                          out_signature='u')
     def Notify(self, app_name, notification_id, app_icon,
                summary, body, actions, hints, expire_timeout):
-        text = summary
-        if not summary:
-            text = body
-        
         if (expire_timeout < 0) or (expire_timeout > MAX_NOTIFY_TIMEOUT):
             expire_timeout = DEFAULT_NOTIFY_TIMEOUT
 
@@ -152,7 +153,7 @@ class NotificationFetcher(dbus.service.Object):
             self._id += 1
             notification_id = self._id
 			
-        text = "%s: %s" % (app_name, text)
+        text = "%s %s" % (summary, body)
         add_notification( [notification_id,
                           text[:NOTIFICATION_MAX_LENGTH],
                           int(expire_timeout) / 1000.0] )
@@ -169,21 +170,23 @@ class NotificationFetcher(dbus.service.Object):
     @dbus.service.method("org.freedesktop.Notifications", in_signature='u', out_signature='')
     def CloseNotification(self, id):
         pass
-	
 
-dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-session_bus = dbus.SessionBus()
-name = dbus.service.BusName("org.freedesktop.Notifications", session_bus)
-nf = NotificationFetcher(session_bus, '/org/freedesktop/Notifications')
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        print "%s CURVERSION" % sys.argv[0]
+        sys.exit(1)
 
-# We must use contexts and iterations to run threads
-# http://www.jejik.com/articles/2007/01/python-gstreamer_threading_and_the_main_loop/
-gobject.threads_init()
-context = gobject.MainLoop().get_context()
-thread.start_new_thread(message_thread, (None,))
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+    session_bus = dbus.SessionBus()
+    name = dbus.service.BusName("org.freedesktop.Notifications", session_bus)
+    nf = NotificationFetcher(session_bus, '/org/freedesktop/Notifications')
 
-while 1:
-	context.iteration(True)
-
-
+    # We must use contexts and iterations to run threads
+    # http://www.jejik.com/articles/2007/01/python-gstreamer_threading_and_the_main_loop/
+    gobject.threads_init()
+    context = gobject.MainLoop().get_context()
+    thread.start_new_thread(message_thread, (None,))
+    
+    while 1:
+        context.iteration(True)
 

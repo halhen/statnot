@@ -1,42 +1,101 @@
-statnot - Status and Notifications
+statnot CURVERSION - Status and Notifications
 
-Lightweight notification-(to-become)-deamon intended to be used
-with lightweight WMs, like dwm.
-Receives Desktop Notifications (including libnotify / notify-send)
-See: http://www.galago-project.org/specs/notification/0.9/index.html
+notification-deamon replacement intended to be used with lightweight 
+window managers such as dwm or wmii
+Receives D-Bus/Desktop Notifications (libnotify / notify-send)
+
+*Note: this is an early version of statnot. It has only been tested with
+a few libnotify enabled applications. PLEASE report any bugs.*
+
+
+Installation
+============
+* edit config.mk to fit your setup
+
+    # make install
+
+statnot does not overwrite any existing notification daemon. However,
+only one receiver of notifications can be active at one, so you need
+to kill any running before starting statnot.
+
+Example .xinitrc when using dwm:
+
+    killall notification-daemon &> /dev/null
+    statnot & 
+    exec dwm
+
+*Note: you should obviously disable any existing status update scripts*
+
+When there is no notification message pending, statnot prints a regular
+status line. By default ~/.statusline.sh is called, and stdout is printed.
+Example .statusline.sh (prints `[load 0.27 0.15 0.10]   12:25`):
+
+    loadavg="`cat /proc/loadavg | awk '{print $1, $2, $3}'`"
+    echo "[load ${loadavg}]   `date +'%R'`"
+
+*Note: make sure .statusline.sh is executable*
+
+To test if it works (watch status bar):
+
+    $ notify-send "Hello World"
+    
+Dependencies
+------------
+* python 2.5+ 
+* python-notify
+
+
+Configuration
+=============
+Configuration is a bit crude. Open the statnot executable - it's python -
+and edit the settings beneath the CONFIGURATION marker.
 
 Note: VERY early prototype, to get feedback. Not close to done. Todo:
-  * Proper integration with dbus (automatically started, etc)
   * Create update_texts for more applications / WMs
-  * Make deamon
   * Testing, also with libnotify enabled apps
   * Packaging, documentation, ...
   * Figure out a decent name (!)
 
-Instructions (for dwm, modify update_text below for other WMs)
-  * Disable regular dwm status update (optional, but they will collide)
-  * Disable notification-daemon. A regular 'kill' should do.
-  * 'chmod +x stat.sh' or configure STATUS_COMMAND below
-  * Start statnot ('python statnot')
-  * Watch status message appear and update
-  * Execute 'notify-send -t 500 Quick; notify-send Test' and watch
-  * Ctrl+C to terminate statnot
 
-Dependencies:
-  * python 2.4+ (?)
-  * python-notify
+Integration
+===========
+statnot should integrate nicely with libnotify enabled softare (please
+report any bugs). If you want to send your own notifications from e.g.
+scripts, try `notify-send`.
 
-Things to think about / need comments:
-  * How to manage quick, overriding messages cleanly, e.g. media
-    button volume change? Is the current 0-time idea OK?
-  * Can update_text be modified easily for other WMs?
-  * Is calling a command and reading from stdout the preferred
-    way of fetching status texts?
-  * Is this a project worth doing at all?
-  * Is python OK or rewrite in e.g. C?
-  * Anything else?
+I use notify-send to display audio volume changes when I press my media
+buttons. Obviously two presses in a row changes the volume two steps
+and I don't want to wait for the first message to timeout before the 
+new, actual message shows. Use `notify-send -t 0` if you want to change
+this behaviour. In this case, the message will show for a regular tick of
+status message updates or until another notification appears.
+
+*Note: the trick above is a workaround. Proper applications implement the
+replaces_id in the Desktop Notifications protocol.*
 
 
+TODO
+====
+* Notification priority
+* update_text functions for other WMs
+
+Considering
+-----------
+* Is python OK or rewrite in e.g. C?
+* Create configuration in a separate file?
+* Proper integration with dbus (automatically started, etc)?
+  Being able to try this out without permanently changing the 
+  regular notification setup is nice.
+ 
+
+Changes
+=======
+0.0.1 (2009-04-13)
+* First released version
+
+
+License
+=======
 Copyright (c) 2009 by Henrik Hallberg (halhen@k2h.se)
 http://code.k2h.se
 Please report bugs or feature requests by e-mail.
