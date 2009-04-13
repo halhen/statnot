@@ -1,0 +1,146 @@
+#!/usr/bin/env python
+
+#
+#   statnot - Status and Notifications
+#
+#   Lightweight notification-(to-become)-deamon intended to be used
+#   with lightweight WMs, like dwm.
+#   Receives Desktop Notifications (including libnotify / notify-send)
+#   See: http://www.galago-project.org/specs/notification/0.9/index.html
+#
+#   Note: VERY early prototype, to get feedback.
+#
+#   Copyright (c) 2009 by Henrik Hallberg (halhen@k2h.se)
+#   http://code.k2h.se
+#   Please report bugs or feature requests by e-mail.
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+import dbus
+import dbus.service
+import dbus.mainloop.glib
+import gobject
+import subprocess
+import thread
+import time
+
+# ===== CONFIGURATION =====
+
+# Default time a notification is show, unless specified in notification
+DEFAULT_NOTIFY_TIMEOUT = 3000 # milliseconds
+
+# Maximum time a notification is allowed to show
+MAX_NOTIFY_TIMEOUT = 5000 # milliseconds
+
+# Time between regular status updates
+STATUS_UPDATE_INTERVAL = 2.0 # seconds
+
+# Command to fetch status text from. We read from stdout.
+# Each argument must be an element in the array
+STATUS_COMMAND = ["/bin/sh", "./stat.sh"] # put a new item in array where you usually put space
+
+# update_text(text) is called when the status text should be updated
+# Uncomment the appropriate one below, or write your own.
+
+# dummy (echo text from daemon)
+#def update_text(text):
+#    print text
+
+# dwm
+def update_text(text):
+    subprocess.call(["xsetroot", "-name", text])
+
+# ===== CONFIGURATION END =====
+
+
+    
+def message_thread(obj):
+    last_status_update = 0
+    while 1:
+        if obj.message_queue:
+            m = obj.message_queue.pop(0)
+            update_text(m[0])
+            # It given time is 0, keep notification for one status message tick
+            # but allow new notifications to appear
+            if m[1] == 0:
+                last_status_update = time.time()
+            else:
+                time.sleep(m[1] / 1000.0)
+        else:
+            if time.time() > last_status_update + STATUS_UPDATE_INTERVAL:
+                p = subprocess.Popen(STATUS_COMMAND, stdout=subprocess.PIPE)
+                while 1:
+                    output = p.stdout.readline()[:-1]
+                    if output == '' and p.poll() != None: break
+                    update_text(output)
+                last_status_update = time.time()
+            time.sleep(0.1)		
+
+class NotificationFetcher(dbus.service.Object):
+    _id = 0
+    message_queue = []
+
+    @dbus.service.method("org.freedesktop.Notifications",
+                         in_signature='susssasa{ss}i',
+                         out_signature='u')
+    def Notify(self, app_name, replaces_id, app_icon,
+               summary, body, actions, hints, expire_timeout):
+        text = summary
+        if not summary:
+            text = body
+        
+        if (expire_timeout < 0) or (expire_timeout > MAX_NOTIFY_TIMEOUT):
+            expire_timeout = DEFAULT_NOTIFY_TIMEOUT
+
+        text = "%s: %s" % (app_name, text)
+       	self.message_queue.append( (text, int(expire_timeout)) )
+
+        if not replaces_id:
+            self._id += 1
+			
+        if not replaces_id:
+            return self._id
+        else:
+            return replaces_id
+		
+    @dbus.service.method("org.freedesktop.Notifications", in_signature='', out_signature='as')
+    def GetCapabilities(self):
+        return ("body")
+	
+    @dbus.service.signal('org.freedesktop.Notifications', signature='uu')
+    def NotificationClosed(self, id_in, reason_in):
+        pass
+
+    @dbus.service.method("org.freedesktop.Notifications", in_signature='u', out_signature='')
+    def CloseNotification(self, id):
+        pass
+	
+
+dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+session_bus = dbus.SessionBus()
+name = dbus.service.BusName("org.freedesktop.Notifications", session_bus)
+nf = NotificationFetcher(session_bus, '/org/freedesktop/Notifications')
+
+# We must use contexts and iterations to run threads
+# http://www.jejik.com/articles/2007/01/python-gstreamer_threading_and_the_main_loop/
+gobject.threads_init()
+context = gobject.MainLoop().get_context()
+thread.start_new_thread(message_thread, (nf,))
+
+while 1:
+	context.iteration(True)
+
+
+

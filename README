@@ -1,0 +1,55 @@
+statnot - Status and Notifications
+
+Lightweight notification-(to-become)-deamon intended to be used
+with lightweight WMs, like dwm.
+Receives Desktop Notifications (including libnotify / notify-send)
+See: http://www.galago-project.org/specs/notification/0.9/index.html
+
+Note: VERY early prototype, to get feedback. Not close to done. Todo:
+  * Proper integration with dbus (automatically started, etc)
+  * Create update_texts for more applications / WMs
+  * Make deamon
+  * Testing, also with libnotify enabled apps
+  * Packaging, documentation, ...
+  * Figure out a decent name (!)
+
+Instructions (for dwm, modify update_text below for other WMs)
+  * Disable regular dwm status update (optional, but they will collide)
+  * Disable notification-daemon. A regular 'kill' should do.
+  * 'chmod +x stat.sh' or configure STATUS_COMMAND below
+  * Start statnot ('python statnot')
+  * Watch status message appear and update
+  * Execute 'notify-send -t 500 Quick; notify-send Test' and watch
+  * Ctrl+C to terminate statnot
+
+Dependencies:
+  * python 2.4+ (?)
+  * python-notify
+
+Things to think about / need comments:
+  * How to manage quick, overriding messages cleanly, e.g. media
+    button volume change? Is the current 0-time idea OK?
+  * Can update_text be modified easily for other WMs?
+  * Is calling a command and reading from stdout the preferred
+    way of fetching status texts?
+  * Is this a project worth doing at all?
+  * Is python OK or rewrite in e.g. C?
+  * Anything else?
+
+
+Copyright (c) 2009 by Henrik Hallberg (halhen@k2h.se)
+http://code.k2h.se
+Please report bugs or feature requests by e-mail.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
