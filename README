@@ -93,6 +93,11 @@ Considering
 
 Changes
 =======
+0.0.2 (2009-04-14)
+* Notification is passed to the status script for formatting.
+  Shout-out to BetterLeftUnsaid @ bbs.archlinux.org for idea.
+* Corrected dependecies.
+
 0.0.1 (2009-04-13)
 * First released version
 
