@@ -50,12 +50,6 @@ Configuration
 Configuration is a bit crude. Open the statnot executable - it's python -
 and edit the settings beneath the CONFIGURATION marker.
 
-Note: VERY early prototype, to get feedback. Not close to done. Todo:
-  * Create update_texts for more applications / WMs
-  * Testing, also with libnotify enabled apps
-  * Packaging, documentation, ...
-  * Figure out a decent name (!)
-
 
 Integration
 ===========
