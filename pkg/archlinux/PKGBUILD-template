@@ -6,7 +6,7 @@ pkgdesc="notification-daemon replacement for lightweight WMs"
 license=(GPL)
 arch=('i686' 'x86_64')
 url=http://github.com/halhen/statnot/tree/master
-depends=('python' 'python-notify')
+depends=('python' 'dbus-python' 'pygtk')
 source=(http://www.k2h.se/code/dl/$pkgname-$pkgver.tar.gz)
 md5sums=('MD5SUM')
 

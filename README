@@ -42,7 +42,8 @@ To test if it works (watch status bar):
 Dependencies
 ------------
 * python 2.5+ 
-* python-notify
+* dbus-python
+* pygtk
 
 
 Configuration
