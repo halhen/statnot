@@ -1,0 +1,111 @@
+<html>
+<head>
+<title>statnot</title>
+<link href="styles.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="content">
+<h1>statnot</h1>
+<p>
+statnot is a <a href="http://www.galago-project.org/news/index.php">notification-daemon</a> replacement for lightweight window managers like <a href="http://dwm.suckless.org">dwm</a> and <a href="http://wmii.suckless.org">wmii</a>. It receives and displays notifications from the widely used <a href="http://www.galago-project.org/specs/notification/0.9/index.html">Desktop Notifications</a> speficiation.</p>
+<ul>
+<li><a href="http://www.k2h.se/code/dl/statnot-latest.tar.gz">latest release</a></li>
+<li><a href="http://github.com/halhen/statnot/tree/master">source repository</a></li>
+</ul>
+<p>
+Distribution specific links:</p>
+<ul>
+<li><a href="http://aur.archlinux.org/packages.php?ID=25528">archlinux AUR package</a></li>
+</ul>
+<h2>Background</h2>
+<p>
+In some lightweight window managers, the text in the status bar is fed from an external process. For example dwm (version 5.4 and above) reads the status message from the X root window name, set by <code>xsetroot -name &lt;text&gt;</code>. A user typically enters a loop like below in .xinitrc to keep the status bar updating.</p>
+<pre><code> while true
+ do
+     xsetroot -name &quot;$(date +&quot;%F %R&quot;)&quot;
+     sleep 30s # update every thirty seconds
+ done &amp;</code></pre>
+<p>
+This solution works well for status messages that are managed from a single point, for example when printing the same information every time. statnot lets you combine regular status messages with Desktop Notifications in a straightforward way. </p>
+<h3>Desktop Notifications</h3>
+<p>
+If you have used a &quot;regular&quot; window manager like KDE or Gnome, you have probably come across notifications. The are typically small windows with text messages and sometimes an icon that shows for a couple of seconds before they fade out. They are for example used to let the user know that a new instant message has arrived or that the battery is running low. Desktop Notifications is a specification created for freedesktop.org that many applications use. For example Pidgin and Evolution can be configured to notify for new messages using Desktop Notifications.</p>
+<h2>Installation</h2>
+<p>
+<em>Note: if you install statnot through a package manager, some of these steps have been taken care for you. You probably need to edit the .xinitrc yourself, see below.</em></p>
+<p>
+To install statnot, first install the required dependencies:</p>
+<ul>
+<li><a href="http://www.python.org">python 2.5+</a></li>
+<li><a href="http://dbus.freedesktop.org/releases/dbus-python/">dbus-python</a></li>
+<li><a href="http://www.pygtk.org/">pygtk</a> - (not for GUI support, but the dbus-python library requires it)</li>
+</ul>
+<p>
+Next, adjust the target directories in the <code>config.mk</code> file to fit your setup. </p>
+<p>
+To install, run as root:</p>
+<pre><code> # make install</code></pre>
+<p>
+Finally, statnot needs to start with the window manager. You can for example add the following to .xinitrc:</p>
+<pre><code> killall notification-daemon &amp;&gt; /dev/null
+ statnot &amp; </code></pre>
+<p>
+Note that the statnot needs to be the only notification tool running. The example above makes sure that <code>notification-daemon</code> is not running.</p>
+<h2>Configuration</h2>
+<p>
+The major, likely only, part you want to configure in statnot is what the status message should look like. During installation, a file called <code>.statusline.sh</code> is created in <code>$HOME/</code>. This gets called with regular intervals to retrieve the text that should be printed on the status line. statnot reads the first line of STDOUT, so a simple <code>echo &lt;text&gt;</code> is a good way to return the text.</p>
+<p>
+During normal status updates, .statusline.sh is called without parameters. Here, you typically fetch and <code>echo</code> information about the computers performance, battery level or current time. </p>
+<p>
+Any pending notification is passed as the first argument to .statusline.sh. This way you can include additional information to the actual notification. </p>
+<p>
+Below is an example of .statusline.sh. It prints something like <code>[load 0.12 0.10 0.7]   11:42</code> in the status bar. When there is a pending notification, it prints <code>NOTIFICATION: &lt;notification text&gt;</code>.</p>
+<pre><code> if [ $# -eq 0 ]; then
+     loadavg=&quot;`cat /proc/loadavg | awk '{print $1, $2, $3}'`&quot;;
+     echo &quot;[load ${loadavg}]   `date +'%R'`&quot;;
+ else
+     echo &quot;NOTIFICATION: $1&quot;;
+ fi</code></pre>
+<h3>Advanced configuration</h3>
+<p>
+<em>Note: statnot is in an early version. Configuration is crudely performed in the Python program itself. To adjust these variables, use <code>which statnot</code> to figure out where statnot is located and open it in an editor as root. The configuration section starts some twenty lines from the top. This will change in future, more mature, versions.</em></p>
+<ul>
+<li><code>DEFAULT_NOTIFY_TIMEOUT</code>: number of milliseconds a notify should show unless it requests otherwise. Default: 3000.</li>
+<li><code>MAX_NOTIFY_TIMEOUT</code>: maximum number of milliseconds a notification is allowed to show. Default: 5000.</li>
+<li><code>NOTIFICATION_MAX_LENGTH</code>: maximum length in number of charaters that are shown from a notification. The message is truncated if it is longer. Default: 100.</li>
+<li><code>STATUS_UPDATE_INTERVAL</code>: how often the status message is updated in seconds. Default: 2.0.</li>
+<li><code>STATUS_COMMAND</code>: Speficies which command to fetch the status message from. Default: <code>/bin/sh $HOME/.statusline.sh</code>.</li>
+</ul>
+<p>
+statnot calls the <code>update_text(text)</code> function to update the actual status message. The default implementation updates the status bar in the dwm way, using <code>xsetroot -name</code>. You can write your own <code>update_text</code> function if this doesn't suite your needs.</p>
+<h2>Possible errors</h2>
+<p>
+If no status message shows, verify that statnot is running. Also make sure your $HOME/.statusline.sh works and prints properly.</p>
+<p>
+If notifications are not shown, make sure that no other notification-daemon is running. <code>killall notification-daemon</code> is a good command to try. Restart statnot if there was another daemon running. Also make sure that .statusline.sh takes care of and prints the $1 parameter (see section Configuration).</p>
+<h2>Supported software</h2>
+<p>
+More and more applications use Desktop Notifications. Use <a href="http://www.google.com">Google</a> to find solutions for your applications. <code>libnotify</code> is a good term to search, since it is a common library used by many applications.</p>
+<p>
+You can also send your own notifications to statnot. This is easily done with the <code>notify-send</code> command. For example, <code>notify-send &quot;Hello World&quot;</code> will print <code>Hello World</code> in the status bar according to your speficiation. This is useful to notify that a long running task like a download or software build has finished.</p>
+<p>
+notify-send can also be used for other, more direct messages. For exampe, I call a script called <code>dwm-volume</code> when my volume media buttons on the keyboard are pressed. This script adjusts the volume and sends a notification containing e.g. <code>vol [52%] [on]</code>. </p>
+<pre><code> #!/bin/sh
+ if [ $# -eq 1 ]; then
+     amixer -q set Master $1
+ fi
+ notify-send -t 0 &quot;`amixer get Master | awk 'NR==5 {print &quot;vol &quot; $4, $6}'`&quot;</code></pre>
+<p>
+As you can see, I use the option <code>-t 0</code> to notify-send, i.e. I request that the notification should show for zero milliseconds. For statnot, this means that the message should show for a regular status tick, by default two seconds, but if other notifications arrive, like a second press on the volume button, it goes away. This setup allows my audio volume to show only when I change it, while it updates instantly when I press the media buttons.</p>
+<h2>Final notes</h2>
+<p>
+I'm sure there are other ways to use statnot. For example, one can create an update_text() that sends notifications as e-mail or instant messages, or that stores them to a log file. If you create any cool applications with statnot, I'd be happy to hear about them.</p>
+<p>
+If you are interested in more examples, my <a href="http://github.com/halhen/dotfiles/tree/master">dotfiles, including .statusline.sh</a> and <a href="http://github.com/halhen/dwm/tree/master">dwm configuration</a> are available on <a href="http://github.com/halhen">github</a>.</p>
+<p>
+Written by Henrik Hallberg (<a href="&#x6D;&#x61;i&#x6C;&#x74;&#x6F;:&#104;&#97;&#108;&#104;&#101;&#110;&#64;&#107;&#50;&#104;&#46;&#115;&#101;">&#104;&#97;&#108;&#104;&#101;&#110;&#64;&#107;&#50;&#104;&#46;&#115;&#101;</a>) and released under the GPL. Please report any bugs or feature requests by email. Also, please drop me a line to let me know you like and use this software.</p>
+<p>
+<a href="http://code.k2h.se">http://code.k2h.se</a></p>
+</div>
+</body>
+</html>
