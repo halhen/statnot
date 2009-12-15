@@ -37,6 +37,8 @@ import subprocess
 import sys
 import thread
 import time
+from htmlentitydefs import name2codepoint as n2cp
+import re
 
 # ===== CONFIGURATION =====
 
@@ -66,13 +68,39 @@ STATUS_COMMAND = ["/bin/sh", "%s/.statusline.sh" % os.getenv("HOME")]
 #    print text
 
 # dwm
+#def update_text(text):
+#    subprocess.call(["xsetroot", "-name", text])
+
+# ratpoison
 def update_text(text):
-    subprocess.call(["xsetroot", "-name", text])
+    os.system("ratpoison -c 'echo %s'" % decode_htmlentities(strip_tags(text)))
 
 # ===== CONFIGURATION END =====
 
+def strip_tags(value):
+  "Return the given HTML with all tags stripped."
+  return re.sub(r'<[^>]*?>', '', value)
 
-    
+# from http://snipplr.com/view/19472/decode-html-entities/
+# also on http://snippets.dzone.com/posts/show/4569
+def substitute_entity(match):
+  ent = match.group(3)
+  if match.group(1) == "#":
+    if match.group(2) == '':
+      return unichr(int(ent))
+    elif match.group(2) == 'x':
+      return unichr(int('0x'+ent, 16))
+  else:
+    cp = n2cp.get(ent)
+    if cp:
+      return unichr(cp)
+    else:
+      return match.group()
+
+def decode_htmlentities(string):
+  entity_re = re.compile(r'&(#?)(x?)(\w+);')
+  return entity_re.subn(substitute_entity, string)[0]
+
 # List of not shown notifications.
 # Array of arrays: [id, text, timeout in s]
 # 0th element is being displayed right now, and may change
@@ -204,6 +232,10 @@ class NotificationFetcher(dbus.service.Object):
     @dbus.service.method("org.freedesktop.Notifications", in_signature='u', out_signature='')
     def CloseNotification(self, id):
         pass
+
+    @dbus.service.method("org.freedesktop.Notifications", in_signature='', out_signature='ssss')
+    def GetServerInformation(self):
+      return ("statnot", "http://code.k2h.se", "0.0.2", "1")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
