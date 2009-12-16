@@ -69,12 +69,12 @@ USE_STATUSTEXT=True
 #    print text
 
 # dwm
-#def update_text(text):
-#    subprocess.call(["xsetroot", "-name", text])
+def update_text(text):
+    subprocess.call(["xsetroot", "-name", text])
 
 # ratpoison
-def update_text(text):
-    os.system("ratpoison -c 'echo %s'" % decode_htmlentities(strip_tags(text)))
+# def update_text(text):
+#    os.system("ratpoison -c 'echo %s'" % decode_htmlentities(strip_tags(text)))
 
 # ===== CONFIGURATION END =====
 
