@@ -57,7 +57,7 @@ STATUS_UPDATE_INTERVAL = 2.0 # seconds
 # Command to fetch status text from. We read from stdout.
 # Each argument must be an element in the array
 STATUS_COMMAND = ["/bin/sh", "%s/.statusline.sh" % os.getenv("HOME")] 
-USE_STATUSTEXT=False
+USE_STATUSTEXT=True
 
 # update_text(text) is called when the status text should be updated
 # If there is a pending notification to be formatted, it is appended as
