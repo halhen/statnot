@@ -40,43 +40,41 @@ import time
 from htmlentitydefs import name2codepoint as n2cp
 import re
 
-# ===== CONFIGURATION =====
+# ===== CONFIGURATION DEFAULTS =====
+#
+# See helpstring below for what each setting does
 
-# Default time a notification is show, unless specified in notification
 DEFAULT_NOTIFY_TIMEOUT = 3000 # milliseconds
-
-# Maximum time a notification is allowed to show
 MAX_NOTIFY_TIMEOUT = 5000 # milliseconds
-
-# Maximum number of characters in a notification. 
 NOTIFICATION_MAX_LENGTH = 100 # number of characters
-
-# Time between regular status updates
 STATUS_UPDATE_INTERVAL = 2.0 # seconds
-
-# Command to fetch status text from. We read from stdout.
-# Each argument must be an element in the array
 STATUS_COMMAND = ["/bin/sh", "%s/.statusline.sh" % os.getenv("HOME")] 
 USE_STATUSTEXT=True
-
-# update_text(text) is called when the status text should be updated
-# If there is a pending notification to be formatted, it is appended as
-# the final argument to the STATUS_COMMAND, e.g. as $1 in default shellscript
-# Uncomment the appropriate one below, or write your own.
-
-# dummy (echo text)
-#def update_text(text):
-#    print text
 
 # dwm
 def update_text(text):
     subprocess.call(["xsetroot", "-name", text])
 
-# ratpoison
-# def update_text(text):
-#    os.system("ratpoison -c 'echo %s'" % decode_htmlentities(strip_tags(text)))
-
 # ===== CONFIGURATION END =====
+
+def _getconfigvalue(configmodule, name, default):
+    if hasattr(configmodule, name):
+        return getattr(configmodule, name)
+    return default
+
+def readconfig(filename):
+    import imp
+    try:
+        config = imp.load_source("config", filename)
+    except Exception as e:
+        print "Error: failed to read config file %s" % filename
+        print e
+        sys.exit(2)
+
+    for setting in ("DEFAULT_NOTIFY_TIMEOUT", "MAX_NOTIFY_TIMEOUT", "NOTIFICATION_MAX_LENGTH", "STATUS_UPDATE_INTERVAL",
+                    "STATUS_COMMAND", "USE_STATUSTEXT", "update_text"):
+        if hasattr(config, setting):
+            globals()[setting] = getattr(config, setting)
 
 def strip_tags(value):
   "Return the given HTML with all tags stripped."
@@ -244,9 +242,56 @@ class NotificationFetcher(dbus.service.Object):
       return ("statnot", "http://code.k2h.se", "0.0.2", "1")
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        print "%s CURVERSION" % sys.argv[0]
-        sys.exit(1)
+    for curarg in sys.argv[1:]:
+        if curarg in ('-v', '--version'):
+            print "%s CURVERSION" % sys.argv[0]
+            sys.exit(1)
+        elif curarg in ('-h', '--help'):
+            print "  Usage: %s [-h] [--help] [-v] [--version] [configuration file]" % sys.argv[0]
+            print "    -h, --help:    Print this help and exit"
+            print "    -v, --version: Print version and exit"
+            print ""
+            print "  Configuration:"
+            print "    A file can be read to set the configuration."
+            print "    This configuration file must be written in valid python,"
+            print "    which will be read if the filename is given on the command line."
+            print "    You do only need to set the variables you want to change, and can"
+            print "    leave the rest out."
+            print ""
+            print "    Below is an example of a configuration which sets the defaults."
+            print ""
+            print "      # Default time a notification is show, unless specified in notification"
+            print "      DEFAULT_NOTIFY_TIMEOUT = 3000 # milliseconds"
+            print "      "
+            print "      # Maximum time a notification is allowed to show"
+            print "      MAX_NOTIFY_TIMEOUT = 5000 # milliseconds"
+            print "      "
+            print "      # Maximum number of characters in a notification. "
+            print "      NOTIFICATION_MAX_LENGTH = 100 # number of characters"
+            print "      "
+            print "      # Time between regular status updates"
+            print "      STATUS_UPDATE_INTERVAL = 2.0 # seconds"
+            print "      "
+            print "      # Command to fetch status text from. We read from stdout."
+            print "      # Each argument must be an element in the array"
+            print "      # os must be imported to use os.getenv"
+            print "      import os"
+            print "      STATUS_COMMAND = ['/bin/sh', '%s/.statusline.sh' % os.getenv('HOME')] "
+            print ""
+            print "      # Always show text from STATUS_COMMAND? If false, only show notifications"
+            print "      USE_STATUSTEXT=True"
+            print "      "
+            print "      # update_text(text) is called when the status text should be updated"
+            print "      # If there is a pending notification to be formatted, it is appended as"
+            print "      # the final argument to the STATUS_COMMAND, e.g. as $1 in default shellscript"
+            print ""
+            print "      # dwm statusbar update"
+            print "      import subprocess"
+            print "      def update_text(text):"
+            print "          subprocess.call(['xsetroot', '-name', text])"
+            sys.exit(1)
+        else:
+            readconfig(curarg)
 
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     session_bus = dbus.SessionBus()
