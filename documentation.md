@@ -81,14 +81,14 @@ Below is an example of a configuration which sets the defaults.
     # os must be imported to use os.getenv
     import os
     STATUS_COMMAND = ['/bin/sh', '%s/.statusline.sh' % os.getenv('HOME')] 
-  
+     
     # Always show text from STATUS_COMMAND? If false, only show notifications
     USE_STATUSTEXT=True
-    
+     
     # update_text(text) is called when the status text should be updated
     # If there is a pending notification to be formatted, it is appended as
     # the final argument to the STATUS_COMMAND, e.g. as $1 in default shellscript
-  
+     
     # dwm statusbar update
     import subprocess
     def update_text(text):
