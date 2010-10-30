@@ -66,18 +66,41 @@ Below is an example of .statusline.sh. It prints something like <code>[load 0.12
  else
      echo &quot;NOTIFICATION: $1&quot;;
  fi</code></pre>
-<h3>Advanced configuration</h3>
 <p>
-<em>Note: statnot is in an early version. Configuration is crudely performed in the Python program itself. To adjust these variables, use <code>which statnot</code> to figure out where statnot is located and open it in an editor as root. The configuration section starts some twenty lines from the top. This will change in future, more mature, versions.</em></p>
-<ul>
-<li><code>DEFAULT_NOTIFY_TIMEOUT</code>: number of milliseconds a notify should show unless it requests otherwise. Default: 3000.</li>
-<li><code>MAX_NOTIFY_TIMEOUT</code>: maximum number of milliseconds a notification is allowed to show. Default: 5000.</li>
-<li><code>NOTIFICATION_MAX_LENGTH</code>: maximum length in number of charaters that are shown from a notification. The message is truncated if it is longer. Default: 100.</li>
-<li><code>STATUS_UPDATE_INTERVAL</code>: how often the status message is updated in seconds. Default: 2.0.</li>
-<li><code>STATUS_COMMAND</code>: Speficies which command to fetch the status message from. Default: <code>/bin/sh $HOME/.statusline.sh</code>.</li>
-</ul>
+For more advanced configuration, a configuration file can be passed to statnot on the command line, which overrides the default settings. This configuration file must be written in valid python, which will be read if the filename is given on the command line.  You do only need to set the variables you want to change, and can leave the rest out.</p>
 <p>
-statnot calls the <code>update_text(text)</code> function to update the actual status message. The default implementation updates the status bar in the dwm way, using <code>xsetroot -name</code>. You can write your own <code>update_text</code> function if this doesn't suite your needs.</p>
+Below is an example of a configuration which sets the defaults.</p>
+<pre><code> # Default time a notification is show, unless specified in notification
+ DEFAULT_NOTIFY_TIMEOUT = 3000 # milliseconds
+ 
+ # Maximum time a notification is allowed to show
+ MAX_NOTIFY_TIMEOUT = 5000 # milliseconds
+ 
+ # Maximum number of characters in a notification. 
+ NOTIFICATION_MAX_LENGTH = 100 # number of characters
+ 
+ # Time between regular status updates
+ STATUS_UPDATE_INTERVAL = 2.0 # seconds
+ 
+ # Command to fetch status text from. We read from stdout.
+ # Each argument must be an element in the array
+ # os must be imported to use os.getenv
+ import os
+ STATUS_COMMAND = ['/bin/sh', '%s/.statusline.sh' % os.getenv('HOME')]
+
+ # Always show text from STATUS_COMMAND? If false, only show notifications
+ USE_STATUSTEXT=True
+ 
+ # update_text(text) is called when the status text should be updated
+ # If there is a pending notification to be formatted, it is appended as
+ # the final argument to the STATUS_COMMAND, e.g. as $1 in default shellscript
+
+ # dwm statusbar update
+ import subprocess
+ def update_text(text):
+     subprocess.call(['xsetroot', '-name', text])</code></pre>
+</p>
+</p>
 <h2>Possible errors</h2>
 <p>
 If no status message shows, verify that statnot is running. Also make sure your $HOME/.statusline.sh works and prints properly.</p>
