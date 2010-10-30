@@ -6,12 +6,15 @@ pkgdesc="notification-daemon replacement for lightweight WMs"
 license=(GPL)
 arch=('i686' 'x86_64')
 url=http://github.com/halhen/statnot/tree/master
-depends=('python' 'dbus-python' 'pygtk')
+depends=('python2' 'dbus-python' 'pygtk')
+optdepends=('libnotify: send notifications to statnot')
 source=(http://www.k2h.se/code/dl/$pkgname-$pkgver.tar.gz)
 md5sums=('MD5SUM')
 
 build() {
 cd $startdir/src/$pkgname-$pkgver
+sed '1 s/python/python2/' statnot > statnot.tmp
+mv statnot{.tmp,}
 make PREFIX=/usr MANPREFIX=/usr/man DESTDIR=$startdir/pkg install || return 1
 install -D -m644 LICENSE $startdir/pkg/usr/share/licenses/$pkgname/LICENSE
 }
