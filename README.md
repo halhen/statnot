@@ -1,8 +1,7 @@
 # statnot
 statnot is a [notification-daemon](http://www.galago-project.org/news/index.php) replacement for lightweight window managers like [dwm](http://dwm.suckless.org) and [wmii](http://wmii.suckless.org). It receives and displays notifications from the widely used [Desktop Notifications](http://www.galago-project.org/specs/notification/0.9/index.html) speficiation.
 
-* [latest release](http://www.k2h.se/code/dl/statnot-latest.tar.gz)
-* [source repository](http://github.com/halhen/statnot/tree/master)
+* [source repository](http://github.com/halhen/statnot/)
 
 Distribution specific links:
 
@@ -85,6 +84,10 @@ Below is an example of a configuration which sets the defaults.
     # Always show text from STATUS_COMMAND? If false, only show notifications
     USE_STATUSTEXT=True
      
+    # Put incoming notifications in a queue, so each one is shown.
+    # If false, the most recent notification is shown directly.
+    QUEUE_NOTIFICATIONS=True
+
     # update_text(text) is called when the status text should be updated
     # If there is a pending notification to be formatted, it is appended as
     # the final argument to the STATUS_COMMAND, e.g. as $1 in default shellscript
@@ -112,7 +115,7 @@ notify-send can also be used for other, more direct messages. For exampe, I call
     fi
     notify-send -t 0 "`amixer get Master | awk 'NR==5 {print "vol " $4, $6}'`"
 
-As you can see, I use the option `-t 0` to notify-send, i.e. I request that the notification should show for zero milliseconds. For statnot, this means that the message should show for a regular status tick, by default two seconds, but if other notifications arrive, like a second press on the volume button, it goes away. This setup allows my audio volume to show only when I change it, while it updates instantly when I press the media buttons.
+As you can see, I use the option `-t 0` to notify-send, i.e. I request that the notification should show for zero milliseconds. For statnot, this means that the message should show for a regular status tick, by default two seconds, but if other notifications arrive, like a second press on the volume button, it goes away. This setup allows my audio volume to show only when I change it, while it updates instantly when I press the media buttons. Note that this option becomes useless if QUEUE_NOTIFICATIONS is set to False.
 
 ## Final notes
 I'm sure there are other ways to use statnot. For example, one can create an update_text() that sends notifications as e-mail or instant messages, or that stores them to a log file. If you create any cool applications with statnot, I'd be happy to hear about them.
@@ -120,7 +123,3 @@ I'm sure there are other ways to use statnot. For example, one can create an upd
 If you are interested in more examples, my [dotfiles, including .statusline.sh](http://github.com/halhen/dotfiles/tree/master) and [dwm configuration](http://github.com/halhen/dwm/tree/master) are available on [github](http://github.com/halhen).
 
 Written by Henrik Hallberg (<halhen@k2h.se>) and released under the GPL. Please report any bugs or feature requests by email. Also, please drop me a line to let me know you like and use this software.
-
-<http://code.k2h.se>
-
-

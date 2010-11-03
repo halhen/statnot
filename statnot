@@ -50,6 +50,7 @@ NOTIFICATION_MAX_LENGTH = 100 # number of characters
 STATUS_UPDATE_INTERVAL = 2.0 # seconds
 STATUS_COMMAND = ["/bin/sh", "%s/.statusline.sh" % os.getenv("HOME")] 
 USE_STATUSTEXT=True
+QUEUE_NOTIFICATIONS=True
 
 # dwm
 def update_text(text):
@@ -72,7 +73,7 @@ def readconfig(filename):
         sys.exit(2)
 
     for setting in ("DEFAULT_NOTIFY_TIMEOUT", "MAX_NOTIFY_TIMEOUT", "NOTIFICATION_MAX_LENGTH", "STATUS_UPDATE_INTERVAL",
-                    "STATUS_COMMAND", "USE_STATUSTEXT", "update_text"):
+                    "STATUS_COMMAND", "USE_STATUSTEXT", "QUEUE_NOTIFICATIONS", "update_text"):
         if hasattr(config, setting):
             globals()[setting] = getattr(config, setting)
 
@@ -123,9 +124,13 @@ def next_notification(pop = False):
         return None
 
     with notification_queue_lock:
-        # If there are several pending messages, discard the first 0-timeouts
-        while len(notification_queue) > 1 and notification_queue[0][2] == 0:
-            notification_queue.pop(0)
+        if QUEUE_NOTIFICATIONS:
+            # If there are several pending messages, discard the first 0-timeouts
+            while len(notification_queue) > 1 and notification_queue[0][2] == 0:
+                notification_queue.pop(0)
+        else:
+            while len(notification_queue) > 1:
+                notification_queue.pop(0)
 
         if pop:
             return notification_queue.pop(0)
@@ -280,6 +285,10 @@ if __name__ == '__main__':
             print ""
             print "      # Always show text from STATUS_COMMAND? If false, only show notifications"
             print "      USE_STATUSTEXT=True"
+            print "      "
+            print "      # Put incoming notifications in a queue, so each one is shown."
+            print "      # If false, the most recent notification is shown directly."
+            print "      QUEUE_NOTIFICATIONS=True"
             print "      "
             print "      # update_text(text) is called when the status text should be updated"
             print "      # If there is a pending notification to be formatted, it is appended as"
