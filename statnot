@@ -54,7 +54,9 @@ QUEUE_NOTIFICATIONS=True
 
 # dwm
 def update_text(text):
-    subprocess.call(["xsetroot", "-name", text])
+    # Get first line
+    first_line = text.splitline()[:-1]
+    subprocess.call(["xsetroot", "-name", first_line])
 
 # ===== CONFIGURATION END =====
 
@@ -147,8 +149,7 @@ def get_statustext(notification = ''):
 
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
 
-        # Get first line
-        output = p.stdout.readline()[:-1]
+        output = p.stdout.read()
     except:
         sys.stderr.write("%s: could not read status message (%s)\n"
                          % (sys.argv[0], ' '.join(STATUS_COMMAND)))
