@@ -44,7 +44,7 @@ Finally, statnot needs to start with the window manager. You can for example add
 Note that the statnot needs to be the only notification tool running. The example above makes sure that `notification-daemon` is not running.
 
 ## Configuration
-The major, likely only, part you want to configure in statnot is what the status message should look like. During installation, a file called `.statusline.sh` is created in `$HOME/`. This gets called with regular intervals to retrieve the text that should be printed on the status line. statnot reads the first line of STDOUT, so a simple `echo <text>` is a good way to return the text.
+The major, likely only, part you want to configure in statnot is what the status message should look like. During installation, a file called `.statusline.sh` is created in `$HOME/`. This gets called with regular intervals to retrieve the text that should be printed on the status line. statnot reads STDOUT, so a simple `echo <text>` is a good way to return the text.
 
 During normal status updates, .statusline.sh is called without parameters. Here, you typically fetch and `echo` information about the computers performance, battery level or current time. 
 
@@ -95,7 +95,9 @@ Below is an example of a configuration which sets the defaults.
     # dwm statusbar update
     import subprocess
     def update_text(text):
-        subprocess.call(['xsetroot', '-name', text])
+        # Get first line
+        first_line = text.splitline()[:-1]
+        subprocess.call(["xsetroot", "-name", first_line])
 
 ## Possible errors
 If no status message shows, verify that statnot is running. Also make sure your $HOME/.statusline.sh works and prints properly.
