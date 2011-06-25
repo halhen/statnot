@@ -122,4 +122,8 @@ I'm sure there are other ways to use statnot. For example, one can create an upd
 
 If you are interested in more examples, my [dotfiles, including .statusline.sh](http://github.com/halhen/dotfiles/tree/master) and [dwm configuration](http://github.com/halhen/dwm/tree/master) are available on [github](http://github.com/halhen).
 
-Written by Henrik Hallberg (<halhen@k2h.se>) and released under the GPL. Please report any bugs or feature requests by email. Also, please drop me a line to let me know you like and use this software.
+Released under the GPL. Please report any bugs or feature requests by email. Also, please drop me a line to let me know you like and use this software.
+
+Authors:
+ * Henrik Hallberg  (<halhen@k2h.se>); halhen@github
+ * Olivier Ramonat; enzbang@github
