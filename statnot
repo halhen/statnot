@@ -55,7 +55,7 @@ QUEUE_NOTIFICATIONS=True
 # dwm
 def update_text(text):
     # Get first line
-    first_line = text.splitline()[:-1]
+    first_line = text.splitlines()[0] if text else ''
     subprocess.call(["xsetroot", "-name", first_line])
 
 # ===== CONFIGURATION END =====
