@@ -124,6 +124,6 @@ I'm sure there are other ways to use statnot. For example, one can create an upd
 Released under the GPL. Please report any bugs or feature requests by email. Also, please drop me a line to let me know you like and use this software.
 
 Authors:
- * Xavier Capaldi; xcapaldi@github
  * Henrik Hallberg  (<halhen@k2h.se>); halhen@github
  * Olivier Ramonat; enzbang@github
+ * Xavier Capaldi; xcapaldi@github

@@ -10,13 +10,7 @@
 #
 #   Note: VERY early prototype, to get feedback.
 #
-#   Copyright (c) 2020 Xavier Capaldi <xcapaldi@scribo.biz>
-#   Copyright (c) 2009-2011 by the original authors
-#
-#   The following code is a derivative work if the original statnot
-#   project (https://github.com/halhen/statnot) which is licensed
-#   GPLv2. This code therefore is also licensed under the terms of
-#   the GNU Public License, version 2.
+#   Copyright (c) 2009-2020 by the authors
 #
 #   This program is free software; you can redistribute it and/or modify
 #   it under the terms of the GNU General Public License as published by
