@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 #   statnot - Status and Notifications
@@ -31,13 +31,13 @@
 import dbus
 import dbus.service
 import dbus.mainloop.glib
-import gobject
+from gi.repository import GLib
 import os
 import subprocess
 import sys
-import thread
+import _thread
 import time
-from htmlentitydefs import name2codepoint as n2cp
+from html.entities import name2codepoint as n2cp
 import re
 
 # ===== CONFIGURATION DEFAULTS =====
@@ -70,8 +70,8 @@ def readconfig(filename):
     try:
         config = imp.load_source("config", filename)
     except Exception as e:
-        print "Error: failed to read config file %s" % filename
-        print e
+        print(f"Error: failed to read config file {filename}")
+        print(e)
         sys.exit(2)
 
     for setting in ("DEFAULT_NOTIFY_TIMEOUT", "MAX_NOTIFY_TIMEOUT", "NOTIFICATION_MAX_LENGTH", "STATUS_UPDATE_INTERVAL",
@@ -109,7 +109,7 @@ def decode_htmlentities(string):
 # Replacements of notification happens att add
 # message_thread only checks first element for changes
 notification_queue = []
-notification_queue_lock = thread.allocate_lock()
+notification_queue_lock = _thread.allocate_lock()
 
 def add_notification(notif):
     with notification_queue_lock:
@@ -225,7 +225,7 @@ class NotificationFetcher(dbus.service.Object):
             self._id += 1
             notification_id = self._id
 
-        text = ("%s %s" % (summary, body)).strip()
+        text = (f"{summary} {body}").strip()
         add_notification( [notification_id,
                           text[:NOTIFICATION_MAX_LENGTH],
                           int(expire_timeout) / 1000.0] )
@@ -250,55 +250,55 @@ class NotificationFetcher(dbus.service.Object):
 if __name__ == '__main__':
     for curarg in sys.argv[1:]:
         if curarg in ('-v', '--version'):
-            print "%s CURVERSION" % sys.argv[0]
+            print(f"{sys.argv[0]} CURVERSION")
             sys.exit(1)
         elif curarg in ('-h', '--help'):
-            print "  Usage: %s [-h] [--help] [-v] [--version] [configuration file]" % sys.argv[0]
-            print "    -h, --help:    Print this help and exit"
-            print "    -v, --version: Print version and exit"
-            print ""
-            print "  Configuration:"
-            print "    A file can be read to set the configuration."
-            print "    This configuration file must be written in valid python,"
-            print "    which will be read if the filename is given on the command line."
-            print "    You do only need to set the variables you want to change, and can"
-            print "    leave the rest out."
-            print ""
-            print "    Below is an example of a configuration which sets the defaults."
-            print ""
-            print "      # Default time a notification is show, unless specified in notification"
-            print "      DEFAULT_NOTIFY_TIMEOUT = 3000 # milliseconds"
-            print "      "
-            print "      # Maximum time a notification is allowed to show"
-            print "      MAX_NOTIFY_TIMEOUT = 5000 # milliseconds"
-            print "      "
-            print "      # Maximum number of characters in a notification. "
-            print "      NOTIFICATION_MAX_LENGTH = 100 # number of characters"
-            print "      "
-            print "      # Time between regular status updates"
-            print "      STATUS_UPDATE_INTERVAL = 2.0 # seconds"
-            print "      "
-            print "      # Command to fetch status text from. We read from stdout."
-            print "      # Each argument must be an element in the array"
-            print "      # os must be imported to use os.getenv"
-            print "      import os"
-            print "      STATUS_COMMAND = ['/bin/sh', '%s/.statusline.sh' % os.getenv('HOME')] "
-            print ""
-            print "      # Always show text from STATUS_COMMAND? If false, only show notifications"
-            print "      USE_STATUSTEXT=True"
-            print "      "
-            print "      # Put incoming notifications in a queue, so each one is shown."
-            print "      # If false, the most recent notification is shown directly."
-            print "      QUEUE_NOTIFICATIONS=True"
-            print "      "
-            print "      # update_text(text) is called when the status text should be updated"
-            print "      # If there is a pending notification to be formatted, it is appended as"
-            print "      # the final argument to the STATUS_COMMAND, e.g. as $1 in default shellscript"
-            print ""
-            print "      # dwm statusbar update"
-            print "      import subprocess"
-            print "      def update_text(text):"
-            print "          subprocess.call(['xsetroot', '-name', text])"
+            print(f"  Usage: {sys.argv[0]} [-h] [--help] [-v] [--version] [configuration file]\n"
+                   "    -h, --help:    Print this help and exit\n"
+                   "    -v, --version: Print version and exit\n"
+                   "\n"
+                   "  Configuration:\n"
+                   "    A file can be read to set the configuration.\n"
+                   "    This configuration file must be written in valid python,\n"
+                   "    which will be read if the filename is given on the command line.\n"
+                   "    You do only need to set the variables you want to change, and can\n"
+                   "    leave the rest out.\n"
+                   "\n"
+                   "    Below is an example of a configuration which sets the defaults.\n"
+                   "\n"
+                   "      # Default time a notification is show, unless specified in notification\n"
+                   "      DEFAULT_NOTIFY_TIMEOUT = 3000 # milliseconds\n"
+                   "      \n"
+                   "      # Maximum time a notification is allowed to show\n"
+                   "      MAX_NOTIFY_TIMEOUT = 5000 # milliseconds\n"
+                   "      \n"
+                   "      # Maximum number of characters in a notification.\n"
+                   "      NOTIFICATION_MAX_LENGTH = 100 # number of characters\n"
+                   "      \n"
+                   "      # Time between regular status updates\n"
+                   "      STATUS_UPDATE_INTERVAL = 2.0 # seconds\n"
+                   "      \n"
+                   "      # Command to fetch status text from. We read from stdout.\n"
+                   "      # Each argument must be an element in the array\n"
+                   "      # os must be imported to use os.getenv\n"
+                   "      import os\n"
+                   "      STATUS_COMMAND = ['/bin/sh', '%s/.statusline.sh' % os.getenv('HOME')]\n"
+                   "\n"
+                   "      # Always show text from STATUS_COMMAND? If false, only show notifications\n"
+                   "      USE_STATUSTEXT=True\n"
+                   "      \n"
+                   "      # Put incoming notifications in a queue, so each one is shown.\n"
+                   "      # If false, the most recent notification is shown directly.\n"
+                   "      QUEUE_NOTIFICATIONS=True\n"
+                   "      \n"
+                   "      # update_text(text) is called when the status text should be updated\n"
+                   "      # If there is a pending notification to be formatted, it is appended as\n"
+                   "      # the final argument to the STATUS_COMMAND, e.g. as $1 in default shellscript\n"
+                   "\n"
+                   "      # dwm statusbar update\n"
+                   "      import subprocess\n"
+                   "      def update_text(text):\n"
+                   "          subprocess.call(['xsetroot', '-name', text])\n")
             sys.exit(1)
         else:
             readconfig(curarg)
@@ -310,10 +310,11 @@ if __name__ == '__main__':
 
     # We must use contexts and iterations to run threads
     # http://www.jejik.com/articles/2007/01/python-gstreamer_threading_and_the_main_loop/
-    gobject.threads_init()
-    context = gobject.MainLoop().get_context()
-    thread.start_new_thread(message_thread, (None,))
+    # Calling threads_init is not longer needed
+    # https://wiki.gnome.org/PyGObject/Threading
+    #GLib.threads_init()
+    context = GLib.MainLoop().get_context()
+    _thread.start_new_thread(message_thread, (None,))
 
     while 1:
         context.iteration(True)
-
