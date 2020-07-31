@@ -3,10 +3,6 @@ statnot is a [notification-daemon](http://www.galago-project.org/news/index.php)
 
 * [source repository](http://github.com/halhen/statnot/)
 
-Distribution specific links:
-
-* [archlinux AUR package](http://aur.archlinux.org/packages.php?ID=25528)
-
 ## Background
 In some lightweight window managers, the text in the status bar is fed from an external process. For example dwm (version 5.4 and above) reads the status message from the X root window name, set by `xsetroot -name <text>`. A user typically enters a loop like below in .xinitrc to keep the status bar updating.
 
@@ -22,13 +18,16 @@ This solution works well for status messages that are managed from a single poin
 If you have used a "regular" window manager like KDE or Gnome, you have probably come across notifications. The are typically small windows with text messages and sometimes an icon that shows for a couple of seconds before they fade out. They are for example used to let the user know that a new instant message has arrived or that the battery is running low. Desktop Notifications is a specification created for freedesktop.org that many applications use. For example Pidgin and Evolution can be configured to notify for new messages using Desktop Notifications.
 
 ## Installation
-*Note: if you install statnot through a package manager, some of these steps have been taken care for you. You probably need to edit the .xinitrc yourself, see below.*
 
 To install statnot, first install the required dependencies:
 
-* [python 2.5+](http://www.python.org)
-* [dbus-python](http://dbus.freedesktop.org/releases/dbus-python/)
-* [pygtk](http://www.pygtk.org/) - (not for GUI support, but the dbus-python library requires it)
+* [python 3.5+](http://www.python.org)
+* dbus-python
+* PyGObject
+* gtk3 - (not for GUI support)
+
+Follow the [PyGObject installation instructions](https://pygobject.readthedocs.io/en/latest/getting_started.html) for your system.
+That should take care of most of your dependencies.
 
 Next, adjust the target directories in the `config.mk` file to fit your setup. 
 
@@ -79,7 +78,7 @@ Below is an example of a configuration which sets the defaults.
     # Each argument must be an element in the array
     # os must be imported to use os.getenv
     import os
-    STATUS_COMMAND = ['/bin/sh', '%s/.statusline.sh' % os.getenv('HOME')] 
+    STATUS_COMMAND = ['/bin/sh', f'{os.getenv('HOME')}/.statusline.sh'] 
      
     # Always show text from STATUS_COMMAND? If false, only show notifications
     USE_STATUSTEXT=True
@@ -122,10 +121,9 @@ As you can see, I use the option `-t 0` to notify-send, i.e. I request that the 
 ## Final notes
 I'm sure there are other ways to use statnot. For example, one can create an update_text() that sends notifications as e-mail or instant messages, or that stores them to a log file. If you create any cool applications with statnot, I'd be happy to hear about them.
 
-If you are interested in more examples, my [dotfiles, including .statusline.sh](http://github.com/halhen/dotfiles/tree/master) and [dwm configuration](http://github.com/halhen/dwm/tree/master) are available on [github](http://github.com/halhen).
-
 Released under the GPL. Please report any bugs or feature requests by email. Also, please drop me a line to let me know you like and use this software.
 
 Authors:
+ * Xavier Capaldi; xcapaldi@github
  * Henrik Hallberg  (<halhen@k2h.se>); halhen@github
  * Olivier Ramonat; enzbang@github
